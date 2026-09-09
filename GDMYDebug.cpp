@@ -14,7 +14,6 @@
 #include "scene/gui/control.h"
 #include "servers/display/display_server.h"
 #include "servers/rendering/rendering_server.h"
-#include <optional>
 
 #if GDMYDEBUG_ENABLE_IMPL
 #define GDMYDEBUG_IS_GAME_NOW() (GDMYDebug_CPP::is_game_now())
@@ -161,6 +160,7 @@ void GDMYDebug::flush() {
 		Vector<Cmd> copy_command_buffer;
 		{
 			MutexLock lock(command_buffer_mutex);
+			copy_command_buffer.reserve(command_buffer.size());
 			copy_command_buffer = command_buffer;
 			command_buffer.clear();
 		}
@@ -180,15 +180,27 @@ void GDMYDebug::flush() {
 	}
 }
 
-void GDMYDebug::set_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a) {
+void GDMYDebug::set_print_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		add_print_commands(Cmd::SetColorCmd(GDMYDebug_CPP::get_color(r, g, b, a)));
+		set_print_color(GDMYDebug_CPP::get_color(r, g, b, a));
 	}
 }
 
-void GDMYDebug::set_position(const int32_t pos_x, const int32_t pos_y) {
+void GDMYDebug::set_print_color(const Color &color) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		add_print_commands(Cmd::SetPositionCmd(Vector2(pos_x, pos_y)));
+		add_print_commands(Cmd::SetColorCmd(color));
+	}
+}
+
+void GDMYDebug::set_print_position(const int32_t pos_x, const int32_t pos_y) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		set_print_position(Vector2(pos_x, pos_y));
+	}
+}
+
+void GDMYDebug::set_print_position(const Vector2 &pos) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		add_print_commands(Cmd::SetPositionCmd(pos));
 	}
 }
 
@@ -198,9 +210,116 @@ void GDMYDebug::print(const String &p_text) {
 	}
 }
 
-int32_t GDMYDebug::get_font_size() const {
-	// this does not require GDMYDEBUG_IS_GAME_NOW
-	return DEBUG_FONT_SIZE;
+void GDMYDebug::set_perf_stats_enabled(const bool is_enable_now) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		perf_stats_config_override.is_enabled = std::optional<bool>(is_enable_now);
+	}
+}
+
+void GDMYDebug::set_perf_stats_font_size(const int32_t font_size) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		perf_stats_config_override.font_size = std::optional<int32_t>(font_size);
+	}
+}
+
+void GDMYDebug::set_perf_stats_font_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		set_perf_stats_font_color(GDMYDebug_CPP::get_color(r, g, b, a));
+	}
+}
+
+void GDMYDebug::set_perf_stats_font_color(const Color &color) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		perf_stats_config_override.font_color = std::optional<Color>(color);
+	}
+}
+
+void GDMYDebug::set_perf_stats_print_pos(const int32_t pos_x, const int32_t pos_y) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		set_perf_stats_print_pos(Vector2(pos_x, pos_y));
+	}
+}
+
+void GDMYDebug::set_perf_stats_print_pos(const Vector2 &pos) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		perf_stats_config_override.print_pos = std::optional<Vector2>(Vector2(pos));
+	}
+}
+
+void GDMYDebug::reset_perf_stats_config(const bool is_reset_enable_flag) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		if (is_reset_enable_flag) {
+			perf_stats_config_override = PerfStatsConfigOverride{};
+		} else {
+			const bool keep_enable_flag = get_current_perf_stats_config().is_enabled;
+			perf_stats_config_override = PerfStatsConfigOverride{};
+			perf_stats_config_override.is_enabled = keep_enable_flag;
+		}
+		
+	}
+}
+
+const int32_t GDMYDebug::print_font_size() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PRINT_FONT_SIZE;
+	}
+	return 0;
+}
+
+const Color GDMYDebug::white() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::WHITE;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::black() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::BLACK;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::red() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::RED;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::green() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::GREEN;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::blue() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::BLUE;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::cyan() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::CYAN;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::yellow() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::YELLOW;
+	}
+	return PredefinedColor::TRANSPARENT;
+}
+
+const Color GDMYDebug::magenta() {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		return PredefinedColor::MAGENTA;
+	}
+	return PredefinedColor::TRANSPARENT;
 }
 
 void GDMYDebug::try_attach_scene_tree() {
@@ -226,9 +345,11 @@ void GDMYDebug::print_performance(const Ref<Font> &p_font) const {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
 		if (canvas_item.is_valid()) {
 			if (p_font.is_valid()) {
-				const GDMYDebug_CPP::PerfStats perf_stats = GDMYDebug_CPP::create_now_perf_stats();
-				// expecting outline can make the font always readable in all types of background, 
-				// but it seems that outline makes the font looks blurry ...
+				const PerfStatsConfig &current_perf_stats_config = get_current_perf_stats_config();
+				if (current_perf_stats_config.is_enabled) {
+					const GDMYDebug_CPP::PerfStats &perf_stats = GDMYDebug_CPP::create_now_perf_stats();
+					// expecting outline can make the font always readable in all types of background,
+					// but it seems that outline makes the font looks blurry ...
 #if 0
 			p_font->draw_string(canvas_item,
 					GDMYDebug_CPP::calculate_final_print_screen_pos(Vector2(0, 0), p_font, PERF_STATS_FONT_SIZE),
@@ -246,13 +367,14 @@ void GDMYDebug::print_performance(const Ref<Font> &p_font) const {
 					PERF_STATS_OUTLINE_SIZE,
 					PERF_STATS_OUTLINE_COLOR);
 #endif
-				p_font->draw_string(canvas_item,
-						GDMYDebug_CPP::calculate_final_print_screen_pos(Vector2(0, 0), p_font, PERF_STATS_FONT_SIZE),
-						perf_stats.get_one_line_text(),
-						HORIZONTAL_ALIGNMENT_LEFT,
-						-1,
-						PERF_STATS_FONT_SIZE,
-						PERF_STATS_FONT_COLOR);
+					p_font->draw_string(canvas_item,
+							GDMYDebug_CPP::calculate_final_print_screen_pos(current_perf_stats_config.print_pos, p_font, current_perf_stats_config.font_size),
+							perf_stats.get_one_line_text(),
+							HORIZONTAL_ALIGNMENT_LEFT,
+							-1,
+							current_perf_stats_config.font_size,
+							current_perf_stats_config.font_color);
+				}
 			}
 		}
 	}
@@ -281,11 +403,22 @@ void GDMYDebug::add_print_commands(const Cmd &new_cmd) {
 	}
 }
 
+GDMYDebug::PerfStatsConfig GDMYDebug::get_current_perf_stats_config() const {
+	PerfStatsConfig result = PERF_STATS_CONFIG_DEFAULT;
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+#define X(type, name, value) \
+	result.name = perf_stats_config_override.name.value_or(result.name);
+		PERF_STATS_OPTION_FIELDS
+#undef X
+	}
+	return result;
+}
+
 void GDMYDebug::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd> &new_commands) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
 		if (p_font.is_valid()) {
 			Vector2 current_position = Vector2(0, 0);
-			Color current_color = DEBUG_FONT_COLOR;
+			Color current_color = PRINT_FONT_COLOR;
 			for (const Cmd &command : new_commands) {
 				switch (command.type) {
 					case Cmd::Type::SET_POSITION : {
@@ -295,7 +428,7 @@ void GDMYDebug::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd
 						current_color = command.color;
 					} break;
 					case Cmd::Type::PRINT: {
-						constexpr float font_size = DEBUG_FONT_SIZE;
+						constexpr float font_size = PRINT_FONT_SIZE;
 						print_string(p_font, command.text, current_position, current_color, font_size);
 						current_position.y += p_font->get_height(font_size);
 					} break;
@@ -306,10 +439,30 @@ void GDMYDebug::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd
 }
 
 void GDMYDebug::_bind_methods() {
+	// common
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("white"), &GDMYDebug::white);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("black"), &GDMYDebug::black);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("red"), &GDMYDebug::red);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("green"), &GDMYDebug::green);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("blue"), &GDMYDebug::blue);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("cyan"), &GDMYDebug::cyan);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("yellow"), &GDMYDebug::yellow);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("magenta"), &GDMYDebug::magenta);
+	// print related
 	ClassDB::bind_method(D_METHOD("print", "message"), &GDMYDebug::print);
-	ClassDB::bind_method(D_METHOD("set_position", "pos_x", "pos_y"), &GDMYDebug::set_position);
-	ClassDB::bind_method(D_METHOD("set_color", "r", "g", "b", "a"), &GDMYDebug::set_color, DEFVAL(255));
-	ClassDB::bind_method(D_METHOD("get_font_size"), &GDMYDebug::get_font_size);
+	ClassDB::bind_method(D_METHOD("set_print_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_print_position);
+	ClassDB::bind_method(D_METHOD("set_print_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_print_position);
+	ClassDB::bind_method(D_METHOD("set_print_color_rgba", "r", "g", "b", "a"), (void(GDMYDebug::*)(const int32_t, const int32_t, const int32_t, const int32_t)) & GDMYDebug::set_print_color, DEFVAL(255));
+	ClassDB::bind_method(D_METHOD("set_print_color", "color"), (void(GDMYDebug::*)(const Color &)) & GDMYDebug::set_print_color);
+	ClassDB::bind_static_method("GDMYDebug", D_METHOD("print_font_size"), &GDMYDebug::print_font_size);
+	// perf stats related
+	ClassDB::bind_method(D_METHOD("set_perf_stats_enabled", "is_enable_now"), &GDMYDebug::set_perf_stats_enabled);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_font_size", "font_size"), &GDMYDebug::set_perf_stats_font_size);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_font_color_rgba", "r", "g", "b", "a"), (void(GDMYDebug::*)(const int32_t, const int32_t, const int32_t, const int32_t)) & GDMYDebug::set_perf_stats_font_color, DEFVAL(255));
+	ClassDB::bind_method(D_METHOD("set_perf_stats_font_color", "color"), (void(GDMYDebug::*)(const Color &)) & GDMYDebug::set_perf_stats_font_color);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_print_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_perf_stats_print_pos);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_print_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_perf_stats_print_pos);
+	ClassDB::bind_method(D_METHOD("reset_perf_stats_config", "is_reset_enable_flag"), &GDMYDebug::reset_perf_stats_config, DEFVAL(false));
 }
 
 void GDMYDebug::_notification(int p_what) {
