@@ -101,7 +101,7 @@ A possible reason is that the fallback font does not support that character.
 
 According to my tests, however, most common characters are supported.
 
-(TODO: add picture)
+![font_missing_character_test](images/font_missing_character_test_1600x900.png)
 
 ### How can I change the font used by GDMYDebug?
 
