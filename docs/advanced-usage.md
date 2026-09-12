@@ -1,4 +1,10 @@
-## Advanced Usage
+# Advanced Usage
+
+[English](#english) | [中文](#中文)
+
+---
+
+## English
 
 ### Display Debug Information Above a 3D Object
 
@@ -38,6 +44,8 @@ This is just an example. The appropriate distance depends on the project and the
 `abs_pos` is used here because `unproject_position()` returns a position in viewport coordinates.
 
 ---
+
+## 中文
 
 ## 高级用法
 
