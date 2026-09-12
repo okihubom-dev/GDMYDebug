@@ -105,11 +105,11 @@ bool is_game_now() {
 }
 
 // for HORIZONTAL_ALIGNMENT_LEFT
-Vector2 calculate_final_print_screen_pos(
-		const Vector2 &in_pos,
+Vector2 calculate_final_print_abs_pos(
+		const Vector2 &abs_pos,
 		const Ref<Font> &in_font,
 		const int font_size) {
-	Vector2 Ret = Vector2(in_pos.x, in_pos.y);
+	Vector2 Ret = Vector2(abs_pos.x, abs_pos.y);
 	if (in_font.is_valid()) {
 		Ret += Vector2(0, in_font->get_ascent(font_size));
 	}
@@ -122,6 +122,21 @@ constexpr float convert_to_color_float(const int32_t color_value) {
 
 constexpr Color get_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a) {
 	return Color(convert_to_color_float(r), convert_to_color_float(g), convert_to_color_float(b), convert_to_color_float(a));
+}
+
+float calculate_adjusted_scale(const Vector2& base_size, const Vector2& current_viewport_size)
+{
+	const float scale_x = current_viewport_size.x / base_size.x;
+	const float scale_y = current_viewport_size.y / base_size.y;
+	// to fit different aspect ratio
+	return MIN(scale_x, scale_y);
+}
+
+Vector2 convert_to_abs_pos(const Vector2 &pos, const Vector2 &base_size, const Vector2 &current_viewport_size) {
+	const float final_scale = calculate_adjusted_scale(base_size, current_viewport_size);
+	return Vector2(
+			pos.x * final_scale,
+			pos.y * final_scale);
 }
 
 } //namespace GDMYDebug_CPP
@@ -172,8 +187,13 @@ void GDMYDebug::flush() {
 			if (auto *theme_db = ThemeDB::get_singleton()) {
 				if (const Ref<Font> font = theme_db->get_fallback_font();
 						font.is_valid()) {
+					const Viewport *root_viewport = get_root_viewport();
+					const std::optional<Vector2> root_viewport_size = (root_viewport)
+							? std::optional<Vector2>(root_viewport->get_visible_rect().size)
+							: std::nullopt;
+
 					print_performance(font);
-					process_print_commands(font, copy_command_buffer);
+					process_print_commands(font, copy_command_buffer, root_viewport_size);
 				}
 			}
 		}
@@ -192,15 +212,27 @@ void GDMYDebug::set_print_color(const Color &color) {
 	}
 }
 
-void GDMYDebug::set_print_position(const int32_t pos_x, const int32_t pos_y) {
+void GDMYDebug::set_print_pos(const int32_t pos_x, const int32_t pos_y) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		set_print_position(Vector2(pos_x, pos_y));
+		set_print_pos(Vector2(pos_x, pos_y));
 	}
 }
 
-void GDMYDebug::set_print_position(const Vector2 &pos) {
+void GDMYDebug::set_print_pos(const Vector2 &pos) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		add_print_commands(Cmd::SetPositionCmd(pos));
+		add_print_commands(Cmd::SetPosCmd(pos));
+	}
+}
+
+void GDMYDebug::set_print_abs_pos(const int32_t abs_pos_x, const int32_t abs_pos_y) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		set_print_abs_pos(Vector2(abs_pos_x, abs_pos_y));
+	}
+}
+
+void GDMYDebug::set_print_abs_pos(const Vector2 &abs_pos) {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		add_print_commands(Cmd::SetAbsPosCmd(abs_pos));
 	}
 }
 
@@ -234,13 +266,13 @@ void GDMYDebug::set_perf_stats_font_color(const Color &color) {
 	}
 }
 
-void GDMYDebug::set_perf_stats_print_pos(const int32_t pos_x, const int32_t pos_y) {
+void GDMYDebug::set_perf_stats_print_abs_pos(const int32_t pos_x, const int32_t pos_y) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		set_perf_stats_print_pos(Vector2(pos_x, pos_y));
+		set_perf_stats_print_abs_pos(Vector2(pos_x, pos_y));
 	}
 }
 
-void GDMYDebug::set_perf_stats_print_pos(const Vector2 &pos) {
+void GDMYDebug::set_perf_stats_print_abs_pos(const Vector2 &pos) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
 		perf_stats_config_override.print_pos = std::optional<Vector2>(Vector2(pos));
 	}
@@ -257,13 +289,6 @@ void GDMYDebug::reset_perf_stats_config(const bool is_reset_enable_flag) {
 		}
 		
 	}
-}
-
-const int32_t GDMYDebug::print_font_size() {
-	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PRINT_FONT_SIZE;
-	}
-	return 0;
 }
 
 const Color GDMYDebug::white() {
@@ -326,19 +351,25 @@ void GDMYDebug::try_attach_scene_tree() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
 		if (!is_attached_scene_tree) {
 			// MEMO: main_window seems also fine (Window *main_window = Window::get_from_id(DisplayServerEnums::MAIN_WINDOW_ID))
-			if (SceneTree *scene_tree = SceneTree::get_singleton()) {
-				if (Viewport *viewport = scene_tree->get_root()) {
-					if (RenderingServer *rs = RenderingServer::get_singleton()) {
-						rs->viewport_attach_canvas(viewport->get_viewport_rid(), canvas);
-						rs->viewport_set_canvas_stacking(viewport->get_viewport_rid(), canvas, RenderingServerEnums::CANVAS_LAYER_MAX, 10);
-						rs->canvas_item_set_parent(canvas_item, canvas);
-
-						is_attached_scene_tree = true;
-					}
+			if (Viewport *root_viewport = get_root_viewport()) {
+				if (RenderingServer *rs = RenderingServer::get_singleton()) {
+					rs->viewport_attach_canvas(root_viewport->get_viewport_rid(), canvas);
+					rs->viewport_set_canvas_stacking(root_viewport->get_viewport_rid(), canvas, RenderingServerEnums::CANVAS_LAYER_MAX, 10);
+					rs->canvas_item_set_parent(canvas_item, canvas);
+					is_attached_scene_tree = true;
 				}
 			}
 		}
 	}
+}
+
+Viewport *GDMYDebug::get_root_viewport() const {
+	if (GDMYDEBUG_IS_GAME_NOW()) {
+		if (SceneTree *scene_tree = SceneTree::get_singleton()) {
+			return scene_tree->get_root();
+		}
+	}
+	return nullptr;
 }
 
 void GDMYDebug::print_performance(const Ref<Font> &p_font) const {
@@ -352,14 +383,14 @@ void GDMYDebug::print_performance(const Ref<Font> &p_font) const {
 					// but it seems that outline makes the font looks blurry ...
 #if 0
 			p_font->draw_string(canvas_item,
-					GDMYDebug_CPP::calculate_final_print_screen_pos(Vector2(0, 0), p_font, PERF_STATS_FONT_SIZE),
+					GDMYDebug_CPP::calculate_final_print_abs_pos(Vector2(0, 0), p_font, PERF_STATS_FONT_SIZE),
 					perf_stats.get_one_line_text(),
 					HORIZONTAL_ALIGNMENT_LEFT,
 					-1,
 					PERF_STATS_FONT_SIZE,
 					PERF_STATS_FONT_COLOR);
 			p_font->draw_string_outline(canvas_item,
-					GDMYDebug_CPP::calculate_final_print_screen_pos(Vector2(0, 0), p_font, PERF_STATS_FONT_SIZE),
+					GDMYDebug_CPP::calculate_final_print_abs_pos(Vector2(0, 0), p_font, PERF_STATS_FONT_SIZE),
 					perf_stats.get_one_line_text(),
 					HORIZONTAL_ALIGNMENT_LEFT,
 					-1,
@@ -368,7 +399,7 @@ void GDMYDebug::print_performance(const Ref<Font> &p_font) const {
 					PERF_STATS_OUTLINE_COLOR);
 #endif
 					p_font->draw_string(canvas_item,
-							GDMYDebug_CPP::calculate_final_print_screen_pos(current_perf_stats_config.print_pos, p_font, current_perf_stats_config.font_size),
+							GDMYDebug_CPP::calculate_final_print_abs_pos(current_perf_stats_config.print_pos, p_font, current_perf_stats_config.font_size),
 							perf_stats.get_one_line_text(),
 							HORIZONTAL_ALIGNMENT_LEFT,
 							-1,
@@ -380,20 +411,25 @@ void GDMYDebug::print_performance(const Ref<Font> &p_font) const {
 	}
 }
 
-void GDMYDebug::print_string(const Ref<Font> &p_font, const String &p_text, const Vector2 &p_position, const Color &text_color, const float font_size) const {
+Size2 GDMYDebug::print_string(const Ref<Font> &p_font, const String &p_text, const Vector2 &p_position, const Color &text_color, const float font_size) const {
+	Size2 Ret;
 	if (GDMYDEBUG_IS_GAME_NOW()) {
 		if (canvas_item.is_valid()) {
 			if (p_font.is_valid()) {
-				p_font->draw_string(canvas_item,
-						GDMYDebug_CPP::calculate_final_print_screen_pos(p_position, p_font, font_size),
+				Ret = p_font->get_multiline_string_size(p_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size);
+				p_font->draw_multiline_string(canvas_item,
+						GDMYDebug_CPP::calculate_final_print_abs_pos(p_position, p_font, font_size),
 						p_text,
 						HORIZONTAL_ALIGNMENT_LEFT,
 						-1,
 						font_size,
+						-1,
 						text_color);
+				
 			}
 		}
 	}
+	return Ret;
 }
 
 void GDMYDebug::add_print_commands(const Cmd &new_cmd) {
@@ -414,23 +450,38 @@ GDMYDebug::PerfStatsConfig GDMYDebug::get_current_perf_stats_config() const {
 	return result;
 }
 
-void GDMYDebug::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd> &new_commands) {
+void GDMYDebug::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd> &new_commands, const std::optional<Vector2> &root_viewport_size) {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
 		if (p_font.is_valid()) {
-			Vector2 current_position = Vector2(0, 0);
+			Vector2 current_abs_pos = Vector2(0, 0);
 			Color current_color = PRINT_FONT_COLOR;
 			for (const Cmd &command : new_commands) {
 				switch (command.type) {
-					case Cmd::Type::SET_POSITION : {
-						current_position = command.position;
+					case Cmd::Type::SET_ABS_POS: {
+						current_abs_pos = command.position;
+					} break;
+					case Cmd::Type::SET_POS: {
+						if (root_viewport_size.has_value()) {
+							current_abs_pos = GDMYDebug_CPP::convert_to_abs_pos(command.position, BASE_RESOLUTION, root_viewport_size.value());
+						}
 					} break;
 					case Cmd::Type::SET_COLOR: {
 						current_color = command.color;
 					} break;
 					case Cmd::Type::PRINT: {
 						constexpr float font_size = PRINT_FONT_SIZE;
-						print_string(p_font, command.text, current_position, current_color, font_size);
-						current_position.y += p_font->get_height(font_size);
+						const float adjusted_font_size = (root_viewport_size.has_value())
+								? GDMYDebug_CPP::calculate_adjusted_scale(BASE_RESOLUTION, root_viewport_size.value()) * font_size
+								: font_size;
+						// previously, use draw_string but this cannot handle in-text linebreak, 
+						// so moving to draw_multiline_string
+						// 
+						// draw_multiline_string seems to add some line spacing.
+						// Add a line break at the end of the passed text so that
+						// current_abs_pos.y advances by the same amount for both single-line
+						// and multi-line text.
+						const Size2 draw_size = print_string(p_font, command.text + String("\n"), current_abs_pos, current_color, adjusted_font_size);
+						current_abs_pos.y += draw_size.y;
 					} break;
 				}
 			}
@@ -450,18 +501,19 @@ void GDMYDebug::_bind_methods() {
 	ClassDB::bind_static_method("GDMYDebug", D_METHOD("magenta"), &GDMYDebug::magenta);
 	// print related
 	ClassDB::bind_method(D_METHOD("print", "message"), &GDMYDebug::print);
-	ClassDB::bind_method(D_METHOD("set_print_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_print_position);
-	ClassDB::bind_method(D_METHOD("set_print_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_print_position);
+	ClassDB::bind_method(D_METHOD("set_print_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_print_pos);
+	ClassDB::bind_method(D_METHOD("set_print_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_print_pos);
+	ClassDB::bind_method(D_METHOD("set_print_abs_pos_xy", "abs_pos_x", "abs_pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_print_abs_pos);
+	ClassDB::bind_method(D_METHOD("set_print_abs_pos", "abs_pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_print_abs_pos);
 	ClassDB::bind_method(D_METHOD("set_print_color_rgba", "r", "g", "b", "a"), (void(GDMYDebug::*)(const int32_t, const int32_t, const int32_t, const int32_t)) & GDMYDebug::set_print_color, DEFVAL(255));
 	ClassDB::bind_method(D_METHOD("set_print_color", "color"), (void(GDMYDebug::*)(const Color &)) & GDMYDebug::set_print_color);
-	ClassDB::bind_static_method("GDMYDebug", D_METHOD("print_font_size"), &GDMYDebug::print_font_size);
 	// perf stats related
 	ClassDB::bind_method(D_METHOD("set_perf_stats_enabled", "is_enable_now"), &GDMYDebug::set_perf_stats_enabled);
 	ClassDB::bind_method(D_METHOD("set_perf_stats_font_size", "font_size"), &GDMYDebug::set_perf_stats_font_size);
 	ClassDB::bind_method(D_METHOD("set_perf_stats_font_color_rgba", "r", "g", "b", "a"), (void(GDMYDebug::*)(const int32_t, const int32_t, const int32_t, const int32_t)) & GDMYDebug::set_perf_stats_font_color, DEFVAL(255));
 	ClassDB::bind_method(D_METHOD("set_perf_stats_font_color", "color"), (void(GDMYDebug::*)(const Color &)) & GDMYDebug::set_perf_stats_font_color);
-	ClassDB::bind_method(D_METHOD("set_perf_stats_print_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_perf_stats_print_pos);
-	ClassDB::bind_method(D_METHOD("set_perf_stats_print_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_perf_stats_print_pos);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_print_abs_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_perf_stats_print_abs_pos);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_print_abs_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_perf_stats_print_abs_pos);
 	ClassDB::bind_method(D_METHOD("reset_perf_stats_config", "is_reset_enable_flag"), &GDMYDebug::reset_perf_stats_config, DEFVAL(false));
 }
 
