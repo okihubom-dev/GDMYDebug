@@ -75,7 +75,7 @@ public:
 	void flush();
 	void try_attach_scene_tree();
 
-	// methods to be exposed to SDScript
+	// methods to be exposed to GDScript
 	static Color white();
 	static Color black();
 	static Color red();

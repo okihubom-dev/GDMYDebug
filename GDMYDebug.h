@@ -23,7 +23,7 @@ public:
 	GDMYDebug();
 	~GDMYDebug();
 
-	// methods to be exposed to SDScript
+	// methods to be exposed to GDScript
 	Color white() const;
 	Color black() const;
 	Color red() const;
