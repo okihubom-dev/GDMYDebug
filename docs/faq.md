@@ -6,6 +6,14 @@
 
 ## English
 
+### What is this project?
+
+GDMYDebug is a small personal project for learning, experimentation, and debugging with Godot Engine. It is not intended to be a production-ready or community-driven project.
+
+Because of its personal and experimental nature, Issues and Pull Requests are currently disabled, and there are no guarantees regarding maintenance or backward compatibility.
+
+Discussions are enabled for questions, ideas, feedback, or general discussion about the project.
+
 ### Does GDMYDebug support GDExtension?
 
 No.
@@ -16,7 +24,15 @@ GDMYDebug is currently implemented as a native Godot Engine Module and requires 
 
 No.
 
-I actually tried GDExtension at first, but I feel like there are too many workarounds compared to a C++ Module.
+I actually tried GDExtension at first, but I found that it required too many workarounds compared to a C++ Module.
+
+### Would you prefer this to be implemented officially in Godot?
+
+Yes.
+
+This project is mainly an experiment to explore what a simple in-game debug utility could look like when implemented directly in the engine.
+
+If Godot eventually provides a similar feature officially, I would actually prefer using the official implementation rather than maintaining my own module.
 
 ### Does GDMYDebug work in Release builds?
 
@@ -74,9 +90,9 @@ If you need an exact position in the current viewport, use `abs_pos`.
 
 GDMYDebug uses a dedicated canvas with a high layer value (`RenderingServerEnums::CANVAS_LAYER_MAX`), so its debug output is intended to appear above normal scene rendering.
 
-### What is GDMYDebug?
+### Why is it called GDMYDebug?
 
-I feel like `GDDebug (GodotDebug)` could conflict with another module in the future, so I added `MY` to the name beforehand to avoid potential naming conflicts.
+I felt that `GDDebug` or `GodotDebug` could potentially conflict with another module in the future, so I added `MY` to the name beforehand to avoid potential naming conflicts.
 
 ### Why can't I see the text on the screen?
 
@@ -114,7 +130,7 @@ ClassDB::bind_method(D_METHOD("set_fallback_font", "font"), &ThemeDB::set_fallba
 ```
 
 * [Godot Forum | Changing fallback font in default system font resource](https://forum.godotengine.org/t/changing-fallback-font-in-default-system-font-resource/58809)
-* If you can find the font resource file, I guess you could replace it.
+* If you can find the font resource file, you may be able to replace it.
 
 ### Are there any potential problems?
 
@@ -127,13 +143,23 @@ But anyway, it currently works fine.
 
 ### Any future plans?
 
-I guess no, because I am lazy.
+Probably not. This project is mainly an experiment, and I don't have any specific plans to turn it into a larger or more fully featured tool.
 
-Anyway, you can modify the source yourself.
+If you need something different, feel free to modify the source yourself.
 
 ---
 
 ## 中文
+
+### 这是一个什么项目？
+
+GDMYDebug 是一个用于学习、实验以及 Godot Engine 调试的小型个人项目。
+
+它并不是为了成为一个生产环境工具，也不是作为一个社区驱动的项目来开发的。
+
+由于项目本身具有个人实验性质，目前关闭了 Issues 和 Pull Requests，并不保证持续维护或向后兼容。
+
+Discussions 则用于提问、提出想法、反馈意见以及讨论项目本身。
 
 ### GDMYDebug 支持 GDExtension 吗？
 
@@ -146,6 +172,14 @@ GDMYDebug 目前是直接编译进 Godot 的原生 Module，需要从源码编�
 没有。
 
 我一开始其实尝试过 GDExtension，但相比 C++ Module，我觉得需要做的 workaround 太多了。
+
+### 你更希望这个功能由 Godot 官方实现吗？
+
+是的。
+
+这个项目主要是为了尝试探索：如果直接在 Godot Engine 内部实现一个简单的游戏内调试工具，它可以是什么样子。
+
+如果以后 Godot 官方提供了类似的功能，我实际上更希望使用官方实现，而不是继续维护自己的 Module。
 
 ### GDMYDebug 在 Release 构建中会工作吗？
 
@@ -205,9 +239,9 @@ set_print_abs_pos(20, 20)
 
 GDMYDebug 使用了一个较高 Layer 值的独立 Canvas（`RenderingServerEnums::CANVAS_LAYER_MAX`），因此调试文字设计为显示在普通场景渲染之上。
 
-### 什么是 GDMYDebug？
+### 为什么叫 GDMYDebug？
 
-我觉得 `GDDebug (GodotDebug)` 以后可能会和其他 Module 发生命名冲突，所以提前加上 `MY`，避免潜在的命名冲突。
+我觉得 `GDDebug` 或 `GodotDebug` 以后可能会和其他 Module 发生命名冲突，所以提前加上 `MY`，避免潜在的命名冲突。
 
 ### 为什么看不到屏幕上的文字？
 
@@ -245,7 +279,7 @@ ClassDB::bind_method(D_METHOD("set_fallback_font", "font"), &ThemeDB::set_fallba
 ```
 
 * [Godot Forum | Changing fallback font in default system font resource](https://forum.godotengine.org/t/changing-fallback-font-in-default-system-font-resource/58809)
-* 如果能找到对应的字体资源文件，我猜也可以直接替换它。
+* 如果能找到对应的字体资源文件，也可以尝试直接替换它。
 
 ### 有没有什么潜在的问题？
 
@@ -258,6 +292,8 @@ ClassDB::bind_method(D_METHOD("set_fallback_font", "font"), &ThemeDB::set_fallba
 
 ### 以后有什么计划？
 
-我猜没有，因为我懒。
+大概没有。
 
-总之，你也可以自己修改源码。
+这个项目主要就是一个实验，我目前没有把它发展成大型或功能完善工具的具体计划。
+
+如果你有不同的需求，也可以直接修改源码。
