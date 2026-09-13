@@ -232,7 +232,7 @@ if (auto *theme_db = ThemeDB::get_singleton()) {
 
 不过根据我的测试，大多数常见字符都可以正常显示。
 
-（TODO：添加图片）
+<img src="images/font_missing_character_test_1600x900.png" width="50%">
 
 ### 如何修改 GDMYDebug 使用的字体？
 

@@ -47,8 +47,9 @@ GDMYDebug.set_perf_stats_enabled(true)
 
 - [Getting Started](docs/getting-started.md)
 - [API Reference](docs/api-reference.md)
-- [FAQ](docs/faq.md)
+- [Demo](docs/demo.md)
 - [Advanced Usage](docs/advanced-usage.md)
+- [FAQ](docs/faq.md)
 
 ### Requirements
 
