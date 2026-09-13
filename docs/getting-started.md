@@ -8,8 +8,6 @@ This tutorial uses Godot's official TPS Demo to demonstrate how to get started w
 
 By the end of this tutorial, you will be able to display debug text directly in the game viewport and enable the performance statistics overlay.
 
-[]()
-
 ---
 
 ### 1. Prepare the Environment
