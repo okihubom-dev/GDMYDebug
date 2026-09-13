@@ -1,5 +1,7 @@
 # Getting Started
 
+[English](#english) | [中文](#中文)
+
 ## English
 
 This tutorial uses Godot's official TPS Demo to demonstrate how to get started with GDMYDebug.
