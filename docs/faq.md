@@ -76,7 +76,7 @@ GDMYDebug uses a dedicated canvas with a high layer value (`RenderingServerEnums
 
 ### What is GDMYDebug?
 
-I feel like `GDDebug` could conflict with another module in the future, so I added `MY` to the name beforehand to avoid potential naming conflicts.
+I feel like `GDDebug (GodotDebug)` could conflict with another module in the future, so I added `MY` to the name beforehand to avoid potential naming conflicts.
 
 ### Why can't I see the text on the screen?
 
@@ -207,7 +207,7 @@ GDMYDebug 使用了一个较高 Layer 值的独立 Canvas（`RenderingServerEnum
 
 ### 什么是 GDMYDebug？
 
-我觉得 `GDDebug` 以后可能会和其他 Module 发生命名冲突，所以提前加上 `MY`，避免潜在的命名冲突。
+我觉得 `GDDebug (GodotDebug)` 以后可能会和其他 Module 发生命名冲突，所以提前加上 `MY`，避免潜在的命名冲突。
 
 ### 为什么看不到屏幕上的文字？
 
