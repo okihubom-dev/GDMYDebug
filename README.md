@@ -1,5 +1,7 @@
 # GDMYDebug
 
+(*AI generated documentation*)
+
 [![YouTube | DEMO GDMYDebug](https://img.youtube.com/vi/BpAqvI6E5eE/maxresdefault.jpg)](https://www.youtube.com/watch?v=BpAqvI6E5eE)
 
 [English](#english) | [中文](#中文)
