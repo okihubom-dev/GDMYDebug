@@ -5,14 +5,10 @@
 #include "core/core_bind.h"
 #include "core/object/callable_mp.h"
 #include "core/object/class_db.h"
-#include "core/os/main_loop.h"
 #include "core/os/os.h"
 #include "scene/main/scene_tree.h"
-#include "scene/main/canvas_item.h"
 #include "scene/main/window.h"
 #include "scene/theme/theme_db.h"
-#include "scene/gui/control.h"
-#include "servers/display/display_server.h"
 #include "servers/rendering/rendering_server.h"
 
 #if GDMYDEBUG_ENABLE_IMPL
@@ -293,58 +289,58 @@ void GDMYDebug::reset_perf_stats_config(const bool is_reset_enable_flag) {
 
 const Color GDMYDebug::white() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::WHITE;
+		return GDMYDebugUtils::PredefinedColor::WHITE;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::black() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::BLACK;
+		return GDMYDebugUtils::PredefinedColor::BLACK;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::red() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::RED;
+		return GDMYDebugUtils::PredefinedColor::RED;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::green() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::GREEN;
+		return GDMYDebugUtils::PredefinedColor::GREEN;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::blue() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::BLUE;
+		return GDMYDebugUtils::PredefinedColor::BLUE;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::cyan() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::CYAN;
+		return GDMYDebugUtils::PredefinedColor::CYAN;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::yellow() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::YELLOW;
+		return GDMYDebugUtils::PredefinedColor::YELLOW;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 const Color GDMYDebug::magenta() {
 	if (GDMYDEBUG_IS_GAME_NOW()) {
-		return PredefinedColor::MAGENTA;
+		return GDMYDebugUtils::PredefinedColor::MAGENTA;
 	}
-	return PredefinedColor::TRANSPARENT;
+	return GDMYDebugUtils::PredefinedColor::TRANSPARENT;
 }
 
 void GDMYDebug::try_attach_scene_tree() {

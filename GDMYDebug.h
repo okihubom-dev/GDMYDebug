@@ -1,20 +1,14 @@
 #pragma once
 
-#if defined(DEBUG_ENABLED) || defined(DEV_ENABLED)
-#define GDMYDEBUG_ENABLE_IMPL 1
-#else
-#define GDMYDEBUG_ENABLE_IMPL 0
-#endif
-
-#include "scene/main/node.h"
+#include "GDMYDebugMacro.h"
 #include "core/object/object.h"
 #include "core/os/mutex.h"
 #include "core/templates/vector.h"
+#include "GDMYDebugSharedDefines.h"
 #include <optional>
 
 // forward declaration
-class Control;
-class GDMYDebugPrintScreenOverlay;
+class Viewport;
 class Font;
 
 #define PERF_STATS_OPTION_FIELDS                                    \
@@ -119,58 +113,10 @@ private:
 #undef X
 	};
 
-	struct PredefinedColor {
-		inline static constexpr Color TRANSPARENT = Color(
-				0 / 255.f,
-				0 / 255.f,
-				0 / 255.f,
-				0 / 255.f);
-		inline static constexpr Color WHITE = Color(
-				255 / 255.f,
-				255 / 255.f,
-				255 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color BLACK = Color(
-				0 / 255.f,
-				0 / 255.f,
-				0 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color RED = Color(
-				255 / 255.f,
-				0 / 255.f,
-				0 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color GREEN = Color(
-				0 / 255.f,
-				255 / 255.f,
-				0 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color BLUE = Color(
-				0 / 255.f,
-				0 / 255.f,
-				255 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color CYAN = Color(
-				0 / 255.f,
-				255 / 255.f,
-				255 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color MAGENTA = Color(
-				255 / 255.f,
-				0 / 255.f,
-				255 / 255.f,
-				255 / 255.f);
-		inline static constexpr Color YELLOW = Color(
-				255 / 255.f,
-				255 / 255.f,
-				0 / 255.f,
-				255 / 255.f);
-	};
-
 	inline static GDMYDebug *singleton = nullptr;
 	inline static constexpr Vector2 BASE_RESOLUTION = Vector2(1920, 1080);
 	inline static constexpr int32_t PRINT_FONT_SIZE = 16;
-	inline static constexpr Color PRINT_FONT_COLOR = PredefinedColor::WHITE;
+	inline static constexpr Color PRINT_FONT_COLOR = GDMYDebugUtils::PredefinedColor::WHITE;
 	inline static constexpr PerfStatsConfig PERF_STATS_CONFIG_DEFAULT = PerfStatsConfig{};
 
 	void flush();
