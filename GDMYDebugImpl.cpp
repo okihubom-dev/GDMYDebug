@@ -422,6 +422,7 @@ GDMYDebugImpl::PerfStatsConfig GDMYDebugImpl::get_current_perf_stats_config_unlo
 void GDMYDebugImpl::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd> &new_commands, const std::optional<Vector2> &root_viewport_size) {
 	if (GDMYDebugUtils::is_game_now()) {
 		if (p_font.is_valid()) {
+			static const String linebreak_trick = String("\n");
 			Vector2 current_abs_pos = Vector2(0, 0);
 			Color current_color = PRINT_FONT_COLOR;
 			for (const Cmd &command : new_commands) {
@@ -449,7 +450,7 @@ void GDMYDebugImpl::process_print_commands(const Ref<Font> &p_font, const Vector
 						// Add a line break at the end of the passed text so that
 						// current_abs_pos.y advances by the same amount for both single-line
 						// and multi-line text.
-						const Size2 draw_size = print_string(p_font, command.text + String("\n"), current_abs_pos, current_color, adjusted_font_size);
+						const Size2 draw_size = print_string(p_font, command.text + linebreak_trick, current_abs_pos, current_color, adjusted_font_size);
 						current_abs_pos.y += draw_size.y;
 					} break;
 					default: {
