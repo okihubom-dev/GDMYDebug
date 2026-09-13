@@ -10,9 +10,14 @@
 
 GDMYDebug is a small personal project for learning, experimentation, and debugging with Godot Engine. It is not intended to be a production-ready or community-driven project.
 
+I originally made it because I wanted a simple in-game debug utility that could be implemented directly inside the engine. If Godot eventually provides a similar feature officially, I would actually prefer using the official implementation rather than maintaining my own module.
+
+One of the things I wanted was to keep the setup as simple as possible. GDMYDebug does not require adding or managing Autoloads, modifying project scenes, or manually removing anything from the project for release build. 
+
 Because of its personal and experimental nature, Issues and Pull Requests are currently disabled, and there are no guarantees regarding maintenance or backward compatibility.
 
-Discussions are enabled for questions, ideas, feedback, or general discussion about the project.
+Discussions are enabled because I would like to provide a place where people can ask questions, share ideas, exchange thoughts, or simply discuss the project.
+
 
 ### Does GDMYDebug support GDExtension?
 
@@ -25,14 +30,6 @@ GDMYDebug is currently implemented as a native Godot Engine Module and requires 
 No.
 
 I actually tried GDExtension at first, but I found that it required too many workarounds compared to a C++ Module.
-
-### Would you prefer this to be implemented officially in Godot?
-
-Yes.
-
-This project is mainly an experiment to explore what a simple in-game debug utility could look like when implemented directly in the engine.
-
-If Godot eventually provides a similar feature officially, I would actually prefer using the official implementation rather than maintaining my own module.
 
 ### Does GDMYDebug work in Release builds?
 
@@ -153,13 +150,15 @@ If you need something different, feel free to modify the source yourself.
 
 ### 这是一个什么项目？
 
-GDMYDebug 是一个用于学习、实验以及 Godot Engine 调试的小型个人项目。
+GDMYDebug 是一个用于学习、实验以及 Godot Engine 调试的小型个人项目。它并不是为了成为一个生产环境工具，也不是作为一个社区驱动的项目来开发的。
 
-它并不是为了成为一个生产环境工具，也不是作为一个社区驱动的项目来开发的。
+我最初制作它，是因为我想要一个能够直接集成到引擎内部的简单游戏内调试工具。如果 Godot 官方以后提供了类似的功能，我实际上会更希望使用官方实现，而不是继续维护自己的 Module。
+
+我希望它的使用和配置能够尽可能简单。GDMYDebug 不需要添加或管理 Autoload，不需要修改项目中的 Scene，也不需要为了发布 Release 构建而手动移除任何东西。
 
 由于项目本身具有个人实验性质，目前关闭了 Issues 和 Pull Requests，并不保证持续维护或向后兼容。
 
-Discussions 则用于提问、提出想法、反馈意见以及讨论项目本身。
+Discussions 之所以开启，是因为我希望能提供一个可以让大家提问、分享想法、交流意见，或者单纯讨论这个项目的地方。
 
 ### GDMYDebug 支持 GDExtension 吗？
 
@@ -172,14 +171,6 @@ GDMYDebug 目前是直接编译进 Godot 的原生 Module，需要从源码编�
 没有。
 
 我一开始其实尝试过 GDExtension，但相比 C++ Module，我觉得需要做的 workaround 太多了。
-
-### 你更希望这个功能由 Godot 官方实现吗？
-
-是的。
-
-这个项目主要是为了尝试探索：如果直接在 Godot Engine 内部实现一个简单的游戏内调试工具，它可以是什么样子。
-
-如果以后 Godot 官方提供了类似的功能，我实际上更希望使用官方实现，而不是继续维护自己的 Module。
 
 ### GDMYDebug 在 Release 构建中会工作吗？
 
