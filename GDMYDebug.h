@@ -38,7 +38,7 @@ public:
 	void set_print_pos(const Vector2 &pos);
 	void set_print_abs_pos(const int32_t abs_pos_x, const int32_t abs_pos_y);
 	void set_print_abs_pos(const Vector2 &abs_pos);
-	void print(const String &p_text);
+	void print(const String &p_text, const bool is_with_background = false);
 	void set_perf_stats_enabled(const bool enable_flag);
 	void set_perf_stats_font_size(const int32_t font_size);
 	void set_perf_stats_font_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a = 255);

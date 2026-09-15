@@ -205,9 +205,9 @@ void GDMYDebugImpl::set_print_pos(const Vector2 &pos, const bool is_abs) {
 	}
 }
 
-void GDMYDebugImpl::print(const String &p_text) {
+void GDMYDebugImpl::print(const String &text, const bool is_with_background) {
 	if (GDMYDebugUtils::is_game_now()) {
-		add_command(VarCmdPrint(p_text));
+		add_command(VarCmdPrint(text, is_with_background));
 	}
 }
 
@@ -450,8 +450,8 @@ Viewport *GDMYDebugImpl::get_root_viewport() const {
 	return nullptr;
 }
 
-GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdPrint(const String &in_text) {
-	return VarCmd(CmdPrint{ in_text });
+GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdPrint(const String &in_text, const bool in_is_with_background) {
+	return VarCmd(CmdPrint{ in_text, in_is_with_background });
 }
 
 GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdSetPrintPos(const Vector2 &in_pos, const bool in_is_abs) {
@@ -605,8 +605,11 @@ void GDMYDebugImpl::process_commands(RenderingServer *rs, const Ref<Font> &p_fon
 					// Add a line break at the end of the passed text so that
 					// current_text_cursor_abs_pos.y advances by the same amount for both single-line
 					// and multi-line text.
-					const Size2 draw_size = print_string(p_font, cmd_print->text + linebreak_trick, current_text_cursor_abs_pos, current_text_color, adjusted_font_size);
-					current_text_cursor_abs_pos.y += draw_size.y;
+					const Size2 draw_string_size = print_string(p_font, cmd_print->text + linebreak_trick, current_text_cursor_abs_pos, current_text_color, adjusted_font_size);
+					if (cmd_print->is_with_background) {
+						draw_rect(rs, Rect2(current_text_cursor_abs_pos, draw_string_size), PRINT_BG_COLOR, true, -1.f);
+					}
+					current_text_cursor_abs_pos.y += draw_string_size.y;
 				} else if (const CmdSetPrintPos *cmd_set_print_pos = std::get_if<CmdSetPrintPos>(&command)) {
 					if (cmd_set_print_pos->is_abs) {
 						current_text_cursor_abs_pos = cmd_set_print_pos->pos;

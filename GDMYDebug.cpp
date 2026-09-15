@@ -96,10 +96,10 @@ void GDMYDebug::set_print_abs_pos(const Vector2 &abs_pos) {
 #endif
 }
 
-void GDMYDebug::print(const String &p_text) {
+void GDMYDebug::print(const String &p_text, const bool is_with_background) {
 #if GDMYDEBUG_ENABLE_IMPL
 	if (GDMYDebugImpl *impl = p_impl.get()) {
-		impl->print(p_text);
+		impl->print(p_text, is_with_background);
 	}
 #else
 #endif
@@ -297,7 +297,7 @@ void GDMYDebug::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("yellow"), &GDMYDebug::yellow);
 	ClassDB::bind_method(D_METHOD("magenta"), &GDMYDebug::magenta);
 	// print related
-	ClassDB::bind_method(D_METHOD("print", "message"), &GDMYDebug::print);
+	ClassDB::bind_method(D_METHOD("print", "message", "is_with_background"), &GDMYDebug::print, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("set_print_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_print_pos);
 	ClassDB::bind_method(D_METHOD("set_print_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_print_pos);
 	ClassDB::bind_method(D_METHOD("set_print_abs_pos_xy", "abs_pos_x", "abs_pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_print_abs_pos);

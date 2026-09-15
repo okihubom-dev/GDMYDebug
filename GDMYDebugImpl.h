@@ -16,12 +16,12 @@ class Viewport;
 class Font;
 class RenderingServer;
 
-#define PERF_STATS_OPTION_FIELDS                             \
-	X(bool, is_enabled, false)                               \
-	X(int32_t, font_size, 12)                                \
-	X(Color, font_color, Color(1.f, 1.f, 1.f, 1.f))          \
-	X(Color, background_color, Color(0.f, 0.f, 0.f, 0.7f))   \
-	X(Vector2, print_pos, Vector2(0, 0))                     \
+#define PERF_STATS_OPTION_FIELDS                                              \
+	X(bool, is_enabled, false)                                                \
+	X(int32_t, font_size, 12)                                                 \
+	X(Color, font_color, Color(1.f, 1.f, 1.f, 1.f))                           \
+	X(Color, background_color, GDMYDebugUtils::PredefinedColor::DEFAULT_BG)   \
+	X(Vector2, print_pos, Vector2(0, 0))                                      \
     X(bool, is_no_background, false)
 
 
@@ -50,7 +50,7 @@ public:
 	// abs_pos is absolute pos on the screen
 	void set_print_pos(const int32_t pos_x, const int32_t pos_y, const bool is_abs);
 	void set_print_pos(const Vector2 &pos, const bool is_abs);
-	void print(const String &p_text);
+	void print(const String &text, const bool is_with_background);
 	// perf stats related
 	void set_perf_stats_enabled(const bool enable_flag);
 	void set_perf_stats_font_size(const int32_t font_size);
@@ -87,6 +87,7 @@ private:
 
 	struct CmdPrint {
 		String text{};
+		bool is_with_background{false};
 	};
 
 	struct CmdSetPrintPos {
@@ -127,9 +128,10 @@ private:
 	inline static constexpr Vector2 BASE_RESOLUTION = Vector2(1920, 1080);
 	inline static constexpr int32_t PRINT_FONT_SIZE = 16;
 	inline static constexpr Color PRINT_FONT_COLOR = GDMYDebugUtils::PredefinedColor::WHITE;
+	inline static constexpr Color PRINT_BG_COLOR = GDMYDebugUtils::PredefinedColor::DEFAULT_BG;
 	inline static constexpr PerfStatsConfig PERF_STATS_CONFIG_DEFAULT = PerfStatsConfig{};
 
-	static VarCmd VarCmdPrint(const String &in_text);
+	static VarCmd VarCmdPrint(const String &in_text, const bool in_is_with_background);
 	static VarCmd VarCmdSetPrintPos(const Vector2 &in_pos, const bool in_is_abs);
 	static VarCmd VarCmdSetPrintColor(const Color &in_text_color);
 	static VarCmd VarCmdDrawRect(

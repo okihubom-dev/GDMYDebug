@@ -49,6 +49,11 @@ constexpr Color YELLOW = Color(
 		255 / 255.f,
 		0 / 255.f,
 		255 / 255.f);
+constexpr Color DEFAULT_BG = Color(
+		0 / 255.f,
+		0 / 255.f,
+		0 / 255.f,
+		0.7f);
 } //namespace Color
 
 } //namespace GDMYDebugUtils
