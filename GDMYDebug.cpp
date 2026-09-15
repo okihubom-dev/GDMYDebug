@@ -316,6 +316,7 @@ void GDMYDebug::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("reset_perf_stats_config", "is_reset_enable_flag"), &GDMYDebug::reset_perf_stats_config, DEFVAL(false));
 	// draw related
 	ClassDB::bind_method(D_METHOD("draw_rect", "rect", "color", "is_filled", "width"), &GDMYDebug::draw_rect, DEFVAL(-1.0), DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("draw_rect_abs", "rect", "color", "is_filled", "width"), &GDMYDebug::draw_rect_abs, DEFVAL(-1.0), DEFVAL(true));
 }
 
 void GDMYDebug::_notification(int p_what) {
