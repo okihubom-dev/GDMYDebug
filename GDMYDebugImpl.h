@@ -8,66 +8,25 @@
 #include "core/templates/vector.h"
 
 #include <optional>
+#include <variant>
 
 #if GDMYDEBUG_ENABLE_IMPL
 // forward declaration
 class Viewport;
 class Font;
+class RenderingServer;
 
-#define PERF_STATS_OPTION_FIELDS                                      \
-	X(bool, is_enabled, false)                                        \
-	X(int32_t, font_size, 12)                                         \
-	X(Color, font_color, Color(221 / 255.f, 34 / 255.f, 136 / 255.f)) \
-	X(Vector2, print_pos, Vector2(0, 0))
+#define PERF_STATS_OPTION_FIELDS                             \
+	X(bool, is_enabled, false)                               \
+	X(int32_t, font_size, 12)                                \
+	X(Color, font_color, Color(1.f, 1.f, 1.f, 1.f))          \
+	X(Color, background_color, Color(0.f, 0.f, 0.f, 0.7f))   \
+	X(Vector2, print_pos, Vector2(0, 0))                     \
+    X(bool, is_no_background, false)
 
 
 class GDMYDebugImpl {
 public:
-	struct Cmd {
-		enum class Type : int32_t {
-			NONE = 0,
-			PRINT,
-			SET_POS,
-			SET_COLOR,
-			SET_ABS_POS,
-		};
-
-		Cmd() = default;
-
-		static Cmd PrintCmd(const String &in_text) {
-			Cmd ret;
-			ret.type = Type::PRINT;
-			ret.text = in_text;
-			return ret;
-		}
-
-		static Cmd SetPosCmd(const Vector2 &in_pos) {
-			Cmd ret;
-			ret.type = Type::SET_POS;
-			ret.position = in_pos;
-			return ret;
-		}
-
-		static Cmd SetColorCmd(const Color &in_color) {
-			Cmd ret;
-			ret.type = Type::SET_COLOR;
-			ret.color = in_color;
-			return ret;
-		}
-
-		static Cmd SetAbsPosCmd(const Vector2 &in_pos) {
-			Cmd ret;
-			ret.type = Type::SET_ABS_POS;
-			ret.position = in_pos;
-			return ret;
-		}
-
-		Type type{ Type::NONE };
-		Vector2 position{ Vector2() };
-		Color color{};
-		String text{};
-	};
-
 	GDMYDebugImpl();
 	~GDMYDebugImpl();
 
@@ -84,24 +43,75 @@ public:
 	static Color cyan();
 	static Color yellow();
 	static Color magenta();
+	// print related
 	void set_print_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a = 255);
 	void set_print_color(const Color &color);
 	// pos is relative pos to BASE_RESOLUTION to keep printed text are visually in the same position
 	// abs_pos is absolute pos on the screen
-	void set_print_pos(const int32_t pos_x, const int32_t pos_y);
-	void set_print_pos(const Vector2 &pos);
-	void set_print_abs_pos(const int32_t abs_pos_x, const int32_t abs_pos_y);
-	void set_print_abs_pos(const Vector2 &abs_pos);
+	void set_print_pos(const int32_t pos_x, const int32_t pos_y, const bool is_abs);
+	void set_print_pos(const Vector2 &pos, const bool is_abs);
 	void print(const String &p_text);
+	// perf stats related
 	void set_perf_stats_enabled(const bool enable_flag);
 	void set_perf_stats_font_size(const int32_t font_size);
 	void set_perf_stats_font_color(const int32_t r, const int32_t g, const int32_t b, const int32_t a = 255);
 	void set_perf_stats_font_color(const Color &color);
 	void set_perf_stats_print_abs_pos(const int32_t pos_x, const int32_t pos_y);
 	void set_perf_stats_print_abs_pos(const Vector2 &pos);
+	void set_perf_stats_background_alpha(const float alpha);
+	void set_perf_stats_background_enabled(const bool enable_flag);
 	void reset_perf_stats_config(const bool is_reset_enable_flag = false);
+	// shape related
+	void draw_rect(const Rect2 &p_rect, const Color &p_color, bool p_filled, real_t p_width, const bool is_abs);
+	// TODO
+	void draw_dashed_line(const Point2 &p_from, const Point2 &p_to, const Color &p_color, real_t p_width = -1.0, real_t p_dash = 2.0, bool p_aligned = true);
+	void draw_line(const Point2 &p_from, const Point2 &p_to, const Color &p_color, real_t p_width = -1.0);
+	void draw_polyline(const Vector<Point2> &p_points, const Color &p_color, real_t p_width = -1.0);
+	void draw_polyline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, real_t p_width = -1.0);
+	void draw_ellipse_arc(const Vector2 &p_center, real_t p_major, real_t p_minor, real_t p_start_angle, real_t p_end_angle, int p_point_count, const Color &p_color, real_t p_width = -1.0);
+	void draw_arc(const Vector2 &p_center, real_t p_radius, real_t p_start_angle, real_t p_end_angle, int p_point_count, const Color &p_color, real_t p_width = -1.0);
+	void draw_multiline(const Vector<Point2> &p_points, const Color &p_color, real_t p_width = -1.0);
+	void draw_multiline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, real_t p_width = -1.0);
+	void draw_ellipse(const Point2 &p_pos, real_t p_major, real_t p_minor, const Color &p_color, bool p_filled = true, real_t p_width = -1.0);
+	void draw_circle(const Point2 &p_pos, real_t p_radius, const Color &p_color, bool p_filled = true, real_t p_width = -1.0);
+	void draw_primitive(const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs);
+	void draw_polygon(const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>());
+	void draw_colored_polygon(const Vector<Point2> &p_points, const Color &p_color, const Vector<Point2> &p_uvs = Vector<Point2>());
 
 private:
+	// let text always be the topmost
+	enum ZOrderOfCanvasItem : int32_t {
+		Shape = 0,
+		Text,
+	};
+
+	struct CmdPrint {
+		String text{};
+	};
+
+	struct CmdSetPrintPos {
+		Vector2 pos{ Vector2() };
+		bool is_abs{ false };
+	};
+
+	struct CmdSetPrintColor {
+		Color text_color{};
+	};
+
+	struct CmdDrawRect {
+		Rect2 rect{ Rect2() };
+		Color rect_color{};
+		real_t width{ -1.0 };
+		bool is_filled{ true };
+		bool is_abs{ false };
+	};
+
+	using VarCmd = std::variant<
+			CmdPrint,
+			CmdSetPrintPos,
+			CmdSetPrintColor,
+			CmdDrawRect>;
+
 	struct PerfStatsConfig {
 #define X(type, name, default_value) type name{ default_value };
 		PERF_STATS_OPTION_FIELDS
@@ -119,21 +129,34 @@ private:
 	inline static constexpr Color PRINT_FONT_COLOR = GDMYDebugUtils::PredefinedColor::WHITE;
 	inline static constexpr PerfStatsConfig PERF_STATS_CONFIG_DEFAULT = PerfStatsConfig{};
 
-	Viewport *get_root_viewport() const;
+	static VarCmd VarCmdPrint(const String &in_text);
+	static VarCmd VarCmdSetPrintPos(const Vector2 &in_pos, const bool in_is_abs);
+	static VarCmd VarCmdSetPrintColor(const Color &in_text_color);
+	static VarCmd VarCmdDrawRect(
+			const Rect2 &in_rect,
+			const Color &in_rect_color,
+			const bool in_is_filled,
+			const real_t in_width,
+			const bool in_is_abs);
 
-	void print_performance(const Ref<Font> &p_font) const;
-	void process_print_commands(const Ref<Font> &p_font, const Vector<Cmd> &new_commands, const std::optional<Vector2> &root_viewport_size);
+	Viewport *get_root_viewport() const;
+	void add_command(const VarCmd &new_cmd);
+	void process_commands(RenderingServer *rs, const Ref<Font> &p_font, const Vector<VarCmd> &new_commands, const std::optional<Vector2> &root_viewport_size);
+
+	// all refer CanvasItem::xxx
+	void print_performance(RenderingServer *rs, const Ref<Font> &p_font);
 	Size2 print_string(const Ref<Font> &p_font, const String &p_text, const Vector2 &p_position, const Color &text_color, const float font_size) const;
-	void add_print_commands(const Cmd &new_cmd);
+	void draw_rect(RenderingServer *rs, const Rect2 &p_rect, const Color &p_color, bool p_filled, real_t p_width);
 
 	PerfStatsConfig get_current_perf_stats_config() const;
 	PerfStatsConfig get_current_perf_stats_config_unlocked() const;
 
 	RID canvas;
-	RID canvas_item;
+	RID canvas_item_text;
+	RID canvas_item_shape;
 	bool is_attached_scene_tree{ false };
 	Mutex command_buffer_mutex{};
-	Vector<Cmd> command_buffer{};
+	Vector<VarCmd> command_buffer{};
 	Mutex perf_stats_config_override_mutex{};
 	PerfStatsConfigOverride perf_stats_config_override{};
 };

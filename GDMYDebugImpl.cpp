@@ -132,15 +132,19 @@ GDMYDebugImpl::GDMYDebugImpl() {
 	if (GDMYDebugUtils::is_game_now()) {
 		if (auto *rs = RenderingServer::get_singleton()) {
 			canvas = rs->canvas_create();
-			canvas_item = rs->canvas_item_create();
+			canvas_item_text = rs->canvas_item_create();
+			canvas_item_shape = rs->canvas_item_create();
 		}
 	}
 }
 
 GDMYDebugImpl::~GDMYDebugImpl() {
 	if (auto *rs = RenderingServer::get_singleton()) {
-		if (canvas_item.is_valid()) {
-			rs->free_rid(canvas_item);
+		if (canvas_item_shape.is_valid()) {
+			rs->free_rid(canvas_item_shape);
+		}
+		if (canvas_item_text.is_valid()) {
+			rs->free_rid(canvas_item_text);
 		}
 		if (canvas.is_valid()) {
 			rs->free_rid(canvas);
@@ -150,7 +154,7 @@ GDMYDebugImpl::~GDMYDebugImpl() {
 
 void GDMYDebugImpl::flush() {
 	if (GDMYDebugUtils::is_game_now()) {
-		Vector<Cmd> copy_command_buffer;
+		Vector<VarCmd> copy_command_buffer;
 		{
 			MutexLock lock(command_buffer_mutex);
 			SWAP(copy_command_buffer, command_buffer);
@@ -159,7 +163,8 @@ void GDMYDebugImpl::flush() {
 		try_attach_scene_tree();
 
 		if (RenderingServer *rs = RenderingServer::get_singleton()) {
-			rs->canvas_item_clear(canvas_item);
+			rs->canvas_item_clear(canvas_item_text);
+			rs->canvas_item_clear(canvas_item_shape);
 			if (auto *theme_db = ThemeDB::get_singleton()) {
 				if (const Ref<Font> font = theme_db->get_fallback_font();
 						font.is_valid()) {
@@ -168,8 +173,8 @@ void GDMYDebugImpl::flush() {
 							? std::optional<Vector2>(root_viewport->get_visible_rect().size)
 							: std::nullopt;
 
-					print_performance(font);
-					process_print_commands(font, copy_command_buffer, root_viewport_size);
+					print_performance(rs, font);
+					process_commands(rs, font, copy_command_buffer, root_viewport_size);
 				}
 			}
 		}
@@ -184,37 +189,25 @@ void GDMYDebugImpl::set_print_color(const int32_t r, const int32_t g, const int3
 
 void GDMYDebugImpl::set_print_color(const Color &color) {
 	if (GDMYDebugUtils::is_game_now()) {
-		add_print_commands(Cmd::SetColorCmd(color));
+		add_command(VarCmdSetPrintColor(color));
 	}
 }
 
-void GDMYDebugImpl::set_print_pos(const int32_t pos_x, const int32_t pos_y) {
+void GDMYDebugImpl::set_print_pos(const int32_t pos_x, const int32_t pos_y, const bool is_abs) {
 	if (GDMYDebugUtils::is_game_now()) {
-		set_print_pos(Vector2(pos_x, pos_y));
+		set_print_pos(Vector2(pos_x, pos_y), is_abs);
 	}
 }
 
-void GDMYDebugImpl::set_print_pos(const Vector2 &pos) {
+void GDMYDebugImpl::set_print_pos(const Vector2 &pos, const bool is_abs) {
 	if (GDMYDebugUtils::is_game_now()) {
-		add_print_commands(Cmd::SetPosCmd(pos));
-	}
-}
-
-void GDMYDebugImpl::set_print_abs_pos(const int32_t abs_pos_x, const int32_t abs_pos_y) {
-	if (GDMYDebugUtils::is_game_now()) {
-		set_print_abs_pos(Vector2(abs_pos_x, abs_pos_y));
-	}
-}
-
-void GDMYDebugImpl::set_print_abs_pos(const Vector2 &abs_pos) {
-	if (GDMYDebugUtils::is_game_now()) {
-		add_print_commands(Cmd::SetAbsPosCmd(abs_pos));
+		add_command(VarCmdSetPrintPos(pos, is_abs));
 	}
 }
 
 void GDMYDebugImpl::print(const String &p_text) {
 	if (GDMYDebugUtils::is_game_now()) {
-		add_print_commands(Cmd::PrintCmd(p_text));
+		add_command(VarCmdPrint(p_text));
 	}
 }
 
@@ -258,6 +251,24 @@ void GDMYDebugImpl::set_perf_stats_print_abs_pos(const Vector2 &pos) {
 	}
 }
 
+void GDMYDebugImpl::set_perf_stats_background_alpha(const float alpha)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+		MutexLock lock(perf_stats_config_override_mutex);
+		Color new_background_color = PERF_STATS_CONFIG_DEFAULT.background_color;
+		new_background_color.a = alpha;
+		perf_stats_config_override.background_color = std::optional<Color>(new_background_color);
+	}
+}
+
+void GDMYDebugImpl::set_perf_stats_background_enabled(const bool enable_flag)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+		MutexLock lock(perf_stats_config_override_mutex);
+		perf_stats_config_override.is_no_background = std::optional<bool>(!enable_flag);
+	}
+}
+
 void GDMYDebugImpl::reset_perf_stats_config(const bool is_reset_enable_flag) {
 	if (GDMYDebugUtils::is_game_now()) {
 		MutexLock lock(perf_stats_config_override_mutex);
@@ -270,6 +281,88 @@ void GDMYDebugImpl::reset_perf_stats_config(const bool is_reset_enable_flag) {
 			perf_stats_config_override = PerfStatsConfigOverride{};
 			perf_stats_config_override.is_enabled = keep_enable_flag;
 		}
+	}
+}
+
+void GDMYDebugImpl::draw_dashed_line(const Point2 &p_from, const Point2 &p_to, const Color &p_color, real_t p_width, real_t p_dash, bool p_aligned) {
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_line(const Point2& p_from, const Point2& p_to, const Color& p_color, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_polyline(const Vector<Point2>& p_points, const Color& p_color, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_polyline_colors(const Vector<Point2>& p_points, const Vector<Color>& p_colors, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_ellipse_arc(const Vector2 &p_center, real_t p_major, real_t p_minor, real_t p_start_angle, real_t p_end_angle, int p_point_count, const Color &p_color, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_arc(const Vector2& p_center, real_t p_radius, real_t p_start_angle, real_t p_end_angle, int p_point_count, const Color& p_color, real_t p_width)
+{
+
+}
+
+void GDMYDebugImpl::draw_multiline(const Vector<Point2>& p_points, const Color& p_color, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_multiline_colors(const Vector<Point2>& p_points, const Vector<Color>& p_colors, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_rect(const Rect2 &p_rect, const Color &p_color, bool p_filled, real_t p_width, const bool is_abs) {
+	if (GDMYDebugUtils::is_game_now()) {
+		add_command(VarCmdDrawRect(p_rect, p_color, p_filled, p_width, is_abs));
+	}
+}
+
+void GDMYDebugImpl::draw_ellipse(const Point2& p_pos, real_t p_major, real_t p_minor, const Color& p_color, bool p_filled, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_circle(const Point2& p_pos, real_t p_radius, const Color& p_color, bool p_filled, real_t p_width)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_primitive(const Vector<Point2>& p_points, const Vector<Color>& p_colors, const Vector<Point2>& p_uvs)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_polygon(const Vector<Point2>& p_points, const Vector<Color>& p_colors, const Vector<Point2>& p_uvs)
+{
+	if (GDMYDebugUtils::is_game_now()) {
+	}
+}
+
+void GDMYDebugImpl::draw_colored_polygon(const Vector<Point2>& p_points, const Color& p_color, const Vector<Point2>& p_uvs)
+{
+	if (GDMYDebugUtils::is_game_now()) {
 	}
 }
 
@@ -337,7 +430,10 @@ void GDMYDebugImpl::try_attach_scene_tree() {
 				if (RenderingServer *rs = RenderingServer::get_singleton()) {
 					rs->viewport_attach_canvas(root_viewport->get_viewport_rid(), canvas);
 					rs->viewport_set_canvas_stacking(root_viewport->get_viewport_rid(), canvas, RenderingServerEnums::CANVAS_LAYER_MAX, 10);
-					rs->canvas_item_set_parent(canvas_item, canvas);
+					rs->canvas_item_set_parent(canvas_item_text, canvas);
+					rs->canvas_item_set_parent(canvas_item_shape, canvas);
+					rs->canvas_item_set_z_index(canvas_item_text, ZOrderOfCanvasItem::Text);
+					rs->canvas_item_set_z_index(canvas_item_shape, ZOrderOfCanvasItem::Shape);
 					is_attached_scene_tree = true;
 				}
 			}
@@ -354,22 +450,65 @@ Viewport *GDMYDebugImpl::get_root_viewport() const {
 	return nullptr;
 }
 
-void GDMYDebugImpl::print_performance(const Ref<Font> &p_font) const {
+GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdPrint(const String &in_text) {
+	return VarCmd(CmdPrint{ in_text });
+}
+
+GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdSetPrintPos(const Vector2 &in_pos, const bool in_is_abs) {
+	return VarCmd(CmdSetPrintPos{ in_pos, in_is_abs });
+}
+
+GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdSetPrintColor(const Color &in_text_color) {
+	return VarCmd(CmdSetPrintColor{ in_text_color });
+}
+
+GDMYDebugImpl::VarCmd GDMYDebugImpl::VarCmdDrawRect(
+		const Rect2 &in_rect,
+		const Color &in_rect_color,
+		const bool in_is_filled,
+		const real_t in_width,
+		const bool in_is_abs) {
+	return VarCmd(CmdDrawRect{
+			in_rect,
+			in_rect_color,
+			in_width,
+			in_is_filled,
+			in_is_abs });
+}
+
+void GDMYDebugImpl::print_performance(RenderingServer *rs, const Ref<Font> &p_font) {
 	if (GDMYDebugUtils::is_game_now()) {
-		if (canvas_item.is_valid()) {
+		if (canvas_item_text.is_valid()) {
 			if (p_font.is_valid()) {
 				const PerfStatsConfig &current_perf_stats_config = get_current_perf_stats_config();
 				if (current_perf_stats_config.is_enabled) {
 					const GDMYDebugImpl_CPP::PerfStats perf_stats = GDMYDebugImpl_CPP::create_now_perf_stats();
 					// expecting an outline can make the font always readable in all types of background (draw_string, draw_string_outline) ,
 					// but it seems that outline makes the font looks blurry ...
-					p_font->draw_string(canvas_item,
+					const String perf_stats_text = perf_stats.get_one_line_text();
+					p_font->draw_string(
+							canvas_item_text,
 							GDMYDebugImpl_CPP::calculate_final_print_abs_pos(current_perf_stats_config.print_pos, p_font, current_perf_stats_config.font_size),
-							perf_stats.get_one_line_text(),
+							perf_stats_text,
 							HORIZONTAL_ALIGNMENT_LEFT,
 							-1,
 							current_perf_stats_config.font_size,
 							current_perf_stats_config.font_color);
+					if (!current_perf_stats_config.is_no_background) {
+						if (rs) {
+							const Size2 StringSize = p_font->get_string_size(
+									perf_stats_text,
+									HORIZONTAL_ALIGNMENT_LEFT,
+									-1,
+									current_perf_stats_config.font_size);
+							draw_rect(
+									rs,
+									Rect2{ current_perf_stats_config.print_pos, StringSize },
+									current_perf_stats_config.background_color,
+									true,
+									-1.f);
+						}
+					}
 				}
 			}
 		}
@@ -379,10 +518,10 @@ void GDMYDebugImpl::print_performance(const Ref<Font> &p_font) const {
 Size2 GDMYDebugImpl::print_string(const Ref<Font> &p_font, const String &p_text, const Vector2 &p_position, const Color &text_color, const float font_size) const {
 	Size2 Ret;
 	if (GDMYDebugUtils::is_game_now()) {
-		if (canvas_item.is_valid()) {
+		if (canvas_item_text.is_valid()) {
 			if (p_font.is_valid()) {
 				Ret = p_font->get_multiline_string_size(p_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size);
-				p_font->draw_multiline_string(canvas_item,
+				p_font->draw_multiline_string(canvas_item_text,
 						GDMYDebugImpl_CPP::calculate_final_print_abs_pos(p_position, p_font, font_size),
 						p_text,
 						HORIZONTAL_ALIGNMENT_LEFT,
@@ -396,7 +535,34 @@ Size2 GDMYDebugImpl::print_string(const Ref<Font> &p_font, const String &p_text,
 	return Ret;
 }
 
-void GDMYDebugImpl::add_print_commands(const Cmd &new_cmd) {
+void GDMYDebugImpl::draw_rect(RenderingServer *rs, const Rect2 &p_rect, const Color &p_color, bool p_filled, real_t p_width) {
+	if (rs) {
+		if (p_filled) {
+#if 0
+			if (p_width != -1.0) {
+				WARN_PRINT("The draw_rect() \"width\" argument has no effect when \"filled\" is \"true\".");
+			}
+#endif
+			rs->canvas_item_add_rect(canvas_item_shape, p_rect, p_color, false);
+		} else if (p_width >= p_rect.size.width || p_width >= p_rect.size.height) {
+			rs->canvas_item_add_rect(canvas_item_shape, p_rect.grow(0.5f * p_width), p_color, false);
+		} else {
+			Vector<Vector2> points;
+			points.resize(5);
+			points.write[0] = p_rect.position;
+			points.write[1] = p_rect.position + Vector2(p_rect.size.x, 0);
+			points.write[2] = p_rect.position + p_rect.size;
+			points.write[3] = p_rect.position + Vector2(0, p_rect.size.y);
+			points.write[4] = p_rect.position;
+
+			Vector<Color> colors = { p_color };
+
+			rs->canvas_item_add_polyline(canvas_item_shape, points, colors, p_width, false);
+		}
+	}
+}
+
+void GDMYDebugImpl::add_command(const VarCmd &new_cmd) {
 	if (GDMYDebugUtils::is_game_now()) {
 		MutexLock lock(command_buffer_mutex);
 		command_buffer.push_back(new_cmd);
@@ -419,42 +585,52 @@ GDMYDebugImpl::PerfStatsConfig GDMYDebugImpl::get_current_perf_stats_config_unlo
 	return result;
 }
 
-void GDMYDebugImpl::process_print_commands(const Ref<Font> &p_font, const Vector<Cmd> &new_commands, const std::optional<Vector2> &root_viewport_size) {
+void GDMYDebugImpl::process_commands(RenderingServer *rs, const Ref<Font> &p_font, const Vector<VarCmd> &new_commands, const std::optional<Vector2> &root_viewport_size) {
 	if (GDMYDebugUtils::is_game_now()) {
 		if (p_font.is_valid()) {
 			static const String linebreak_trick = String("\n");
-			Vector2 current_abs_pos = Vector2(0, 0);
-			Color current_color = PRINT_FONT_COLOR;
-			for (const Cmd &command : new_commands) {
-				switch (command.type) {
-					case Cmd::Type::SET_ABS_POS: {
-						current_abs_pos = command.position;
-					} break;
-					case Cmd::Type::SET_POS: {
+			Vector2 current_text_cursor_abs_pos = Vector2(0, 0);
+			Color current_text_color = PRINT_FONT_COLOR;
+
+			for (const VarCmd &command : new_commands) {
+				if (const CmdPrint *cmd_print = std::get_if<CmdPrint>(&command)) {
+					constexpr float font_size = PRINT_FONT_SIZE;
+					const float adjusted_font_size = (root_viewport_size.has_value())
+							? GDMYDebugImpl_CPP::calculate_adjusted_scale(BASE_RESOLUTION, root_viewport_size.value()) * font_size
+							: font_size;
+					// previously, use draw_string but this cannot handle in-text linebreak,
+					// so moving to draw_multiline_string
+					//
+					// draw_multiline_string seems to add some line spacing.
+					// Add a line break at the end of the passed text so that
+					// current_text_cursor_abs_pos.y advances by the same amount for both single-line
+					// and multi-line text.
+					const Size2 draw_size = print_string(p_font, cmd_print->text + linebreak_trick, current_text_cursor_abs_pos, current_text_color, adjusted_font_size);
+					current_text_cursor_abs_pos.y += draw_size.y;
+				} else if (const CmdSetPrintPos *cmd_set_print_pos = std::get_if<CmdSetPrintPos>(&command)) {
+					if (cmd_set_print_pos->is_abs) {
+						current_text_cursor_abs_pos = cmd_set_print_pos->pos;
+					} else {
 						if (root_viewport_size.has_value()) {
-							current_abs_pos = GDMYDebugImpl_CPP::convert_to_abs_pos(command.position, BASE_RESOLUTION, root_viewport_size.value());
+							current_text_cursor_abs_pos = GDMYDebugImpl_CPP::convert_to_abs_pos(cmd_set_print_pos->pos, BASE_RESOLUTION, root_viewport_size.value());
 						}
-					} break;
-					case Cmd::Type::SET_COLOR: {
-						current_color = command.color;
-					} break;
-					case Cmd::Type::PRINT: {
-						constexpr float font_size = PRINT_FONT_SIZE;
-						const float adjusted_font_size = (root_viewport_size.has_value())
-								? GDMYDebugImpl_CPP::calculate_adjusted_scale(BASE_RESOLUTION, root_viewport_size.value()) * font_size
-								: font_size;
-						// previously, use draw_string but this cannot handle in-text linebreak,
-						// so moving to draw_multiline_string
-						//
-						// draw_multiline_string seems to add some line spacing.
-						// Add a line break at the end of the passed text so that
-						// current_abs_pos.y advances by the same amount for both single-line
-						// and multi-line text.
-						const Size2 draw_size = print_string(p_font, command.text + linebreak_trick, current_abs_pos, current_color, adjusted_font_size);
-						current_abs_pos.y += draw_size.y;
-					} break;
-					default: {
-					} break;
+					}
+				} else if (const CmdSetPrintColor *cmd_set_print_color = std::get_if<CmdSetPrintColor>(&command)) {
+					current_text_color = cmd_set_print_color->text_color;
+				} else if (const CmdDrawRect *cmd_draw_rect = std::get_if<CmdDrawRect>(&command)) {
+					if (cmd_draw_rect->is_abs) {
+						draw_rect(rs, cmd_draw_rect->rect, cmd_draw_rect->rect_color, cmd_draw_rect->is_filled, cmd_draw_rect->width);
+					} else {
+						if (root_viewport_size.has_value()) {
+							const Rect2 rect_abs = Rect2(
+									GDMYDebugImpl_CPP::convert_to_abs_pos(cmd_draw_rect->rect.get_position(), BASE_RESOLUTION, root_viewport_size.value()),
+									GDMYDebugImpl_CPP::convert_to_abs_pos(cmd_draw_rect->rect.get_size(), BASE_RESOLUTION, root_viewport_size.value()));
+							const real_t wide_abs = cmd_draw_rect->width * GDMYDebugImpl_CPP::calculate_adjusted_scale(BASE_RESOLUTION, root_viewport_size.value());
+							draw_rect(rs, rect_abs, cmd_draw_rect->rect_color, cmd_draw_rect->is_filled, wide_abs);
+						}
+					}
+				} else {
+					// add a warning?
 				}
 			}
 		}

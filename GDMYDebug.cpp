@@ -63,7 +63,7 @@ void GDMYDebug::set_print_color(const Color &color) {
 void GDMYDebug::set_print_pos(const int32_t pos_x, const int32_t pos_y) {
 #if GDMYDEBUG_ENABLE_IMPL
 	if (GDMYDebugImpl *impl = p_impl.get()) {
-		impl->set_print_pos(pos_x, pos_y);
+		impl->set_print_pos(pos_x, pos_y, false);
 	}
 #else
 #endif
@@ -72,7 +72,7 @@ void GDMYDebug::set_print_pos(const int32_t pos_x, const int32_t pos_y) {
 void GDMYDebug::set_print_pos(const Vector2 &pos) {
 #if GDMYDEBUG_ENABLE_IMPL
 	if (GDMYDebugImpl *impl = p_impl.get()) {
-		impl->set_print_pos(pos);
+		impl->set_print_pos(pos, false);
 	}
 #else
 #endif
@@ -81,7 +81,7 @@ void GDMYDebug::set_print_pos(const Vector2 &pos) {
 void GDMYDebug::set_print_abs_pos(const int32_t abs_pos_x, const int32_t abs_pos_y) {
 #if GDMYDEBUG_ENABLE_IMPL
 	if (GDMYDebugImpl *impl = p_impl.get()) {
-		impl->set_print_abs_pos(abs_pos_x, abs_pos_y);
+		impl->set_print_pos(abs_pos_x, abs_pos_y, true);
 	}
 #else
 #endif
@@ -90,7 +90,7 @@ void GDMYDebug::set_print_abs_pos(const int32_t abs_pos_x, const int32_t abs_pos
 void GDMYDebug::set_print_abs_pos(const Vector2 &abs_pos) {
 #if GDMYDEBUG_ENABLE_IMPL
 	if (GDMYDebugImpl *impl = p_impl.get()) {
-		impl->set_print_abs_pos(abs_pos);
+		impl->set_print_pos(abs_pos, true);
 	}
 #else
 #endif
@@ -159,10 +159,48 @@ void GDMYDebug::set_perf_stats_print_abs_pos(const Vector2 &pos) {
 #endif
 }
 
+void GDMYDebug::set_perf_stats_background_alpha(const float alpha)
+{
+#if GDMYDEBUG_ENABLE_IMPL
+	if (GDMYDebugImpl *impl = p_impl.get()) {
+		impl->set_perf_stats_background_alpha(alpha);
+	}
+#else
+#endif
+}
+
+void GDMYDebug::set_perf_stats_background_enabled(const bool enable_flag)
+{
+#if GDMYDEBUG_ENABLE_IMPL
+	if (GDMYDebugImpl *impl = p_impl.get()) {
+		impl->set_perf_stats_background_enabled(enable_flag);
+	}
+#else
+#endif
+}
+
 void GDMYDebug::reset_perf_stats_config(const bool is_reset_enable_flag) {
 #if GDMYDEBUG_ENABLE_IMPL
 	if (GDMYDebugImpl *impl = p_impl.get()) {
 		impl->reset_perf_stats_config(is_reset_enable_flag);
+	}
+#else
+#endif
+}
+
+void GDMYDebug::draw_rect(const Rect2 &p_rect, const Color &p_color, bool p_filled, real_t p_width) {
+#if GDMYDEBUG_ENABLE_IMPL
+	if (GDMYDebugImpl *impl = p_impl.get()) {
+		impl->draw_rect(p_rect, p_color, p_filled, p_width, false);
+	}
+#else
+#endif
+}
+
+void GDMYDebug::draw_rect_abs(const Rect2 &p_rect, const Color &p_color, bool p_filled, real_t p_width) {
+#if GDMYDEBUG_ENABLE_IMPL
+	if (GDMYDebugImpl *impl = p_impl.get()) {
+		impl->draw_rect(p_rect, p_color, p_filled, p_width, true);
 	}
 #else
 #endif
@@ -273,7 +311,11 @@ void GDMYDebug::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_perf_stats_font_color", "color"), (void(GDMYDebug::*)(const Color &)) & GDMYDebug::set_perf_stats_font_color);
 	ClassDB::bind_method(D_METHOD("set_perf_stats_print_abs_pos_xy", "pos_x", "pos_y"), (void(GDMYDebug::*)(const int32_t, const int32_t)) & GDMYDebug::set_perf_stats_print_abs_pos);
 	ClassDB::bind_method(D_METHOD("set_perf_stats_print_abs_pos", "pos"), (void(GDMYDebug::*)(const Vector2 &)) & GDMYDebug::set_perf_stats_print_abs_pos);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_background_alpha", "alpha"), &GDMYDebug::set_perf_stats_background_alpha);
+	ClassDB::bind_method(D_METHOD("set_perf_stats_background_enabled", "enable_flag"), &GDMYDebug::set_perf_stats_background_enabled);
 	ClassDB::bind_method(D_METHOD("reset_perf_stats_config", "is_reset_enable_flag"), &GDMYDebug::reset_perf_stats_config, DEFVAL(false));
+	// draw related
+	ClassDB::bind_method(D_METHOD("draw_rect", "rect", "color", "is_filled", "width"), &GDMYDebug::draw_rect, DEFVAL(-1.0), DEFVAL(true));
 }
 
 void GDMYDebug::_notification(int p_what) {

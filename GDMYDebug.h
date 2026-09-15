@@ -45,7 +45,11 @@ public:
 	void set_perf_stats_font_color(const Color &color);
 	void set_perf_stats_print_abs_pos(const int32_t pos_x, const int32_t pos_y);
 	void set_perf_stats_print_abs_pos(const Vector2 &pos);
+	void set_perf_stats_background_alpha(const float alpha);
+	void set_perf_stats_background_enabled(const bool enable_flag);
 	void reset_perf_stats_config(const bool is_reset_enable_flag = false);
+	void draw_rect(const Rect2 &p_rect, const Color &p_color, bool p_filled = true, real_t p_width = -1.0);
+	void draw_rect_abs(const Rect2 &p_rect, const Color &p_color, bool p_filled = true, real_t p_width = -1.0);
 
 private:
 	inline static GDMYDebug *singleton = nullptr;
